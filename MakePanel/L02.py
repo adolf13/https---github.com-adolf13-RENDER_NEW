@@ -1,7 +1,7 @@
 """ Модуль для создания рисунка L02"""
 import configparser
 import os
-from .method_ezdxf import create_document, get_modelspace, draw_line, draw_rec_line, save_document
+from .method_ezdxf import create_document, get_modelspace, draw_line, draw_rec_line, save_document, move_all_x
 from size import size
 
 
@@ -62,4 +62,9 @@ def make(model, width, height, inout, output_path):
     # 2. Рисуем горизонтальную линию под  ручкой
     draw_line(msp, x_start_h, y_handle-308, x_end_h, y_handle-308, layer="1003")
     
-    return doc
+    
+    # Сдвигаем чертеж так, чтобы его центр был в 0 по оси X
+    move_all_x(msp, -width_panel / 2)
+    
+    
+    save_document(doc, output_path)

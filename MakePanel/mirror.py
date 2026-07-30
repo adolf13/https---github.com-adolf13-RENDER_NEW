@@ -1,6 +1,7 @@
 # dxf_functions/mirror.py
 import ezdxf
 from ezdxf.math import Matrix44
+#from ezdxf.errors import NoEntitiesError
 
 # --- Старые функции, работающие со словарями ---
 # Эти функции, вероятно, больше не используются
@@ -45,44 +46,29 @@ def mirror_entities(entities, axis='x'):
 
 # --- Новая функция для отзеркаливания DXF файла ---
 
-def mirror_dxf_horizontally(filepath: str):
-    """
-    Отзеркаливает содержимое DXF файла по горизонтали (относительно вертикальной оси).
-
-    Открывает DXF-файл, находит центр его содержимого по оси X, зеркально
-    отражает все объекты относительно этой центральной вертикальной линии и
-    сохраняет изменения в тот же файл.
-
-    Args:
-        filepath (str): Путь к DXF файлу для модификации.
-    """
-    try:
-        doc = ezdxf.readfile(filepath)
-        msp = doc.modelspace()
-    except IOError:
-        print(f"⚠️ Не удалось прочитать файл: {filepath}")
-        return
-    except ezdxf.DXFStructureError:
-        print(f"⚠️ Неверный или поврежденный DXF файл: {filepath}")
-        return
-
-    # 1. Находим габариты всего чертежа
-    try:
-        extents = msp.get_extents()
-    except ezdxf.math.BoundingBoxError:
-        print(f"ℹ️ Файл '{filepath}' пуст, отзеркаливание не требуется.")
-        return  # В файле нет объектов для отзеркаливания
-
-    # 2. Вычисляем центральную ось X
-    center_x = (extents.extmin.x + extents.extmax.x) / 2
-
-    # 3. Создаем матрицу трансформации для зеркального отражения
-    transform = Matrix44.scale(-1, 1, 1) @ Matrix44.translate(center_x, 0, 0)
-
-    # 4. Применяем трансформацию ко всем объектам
+def mirror_y_axis(file_name, axis='x'):
+    '''
+    Переворачивает полученный dxf файл.
+    :param file_name: имя файла
+    :param axis: ось для переворота
+    :return:
+    '''
+    doc = ezdxf.readfile(file_name)
+    msp = doc.modelspace()
     for entity in msp:
-        entity.transform(transform)
+        if axis=='x':
+            entity.scale(-1, 1, 1)
+        else:
+            entity.scale(1,-1,1)
+            
+            
+            
+    # if axis == 'x':
+    #     transform = Matrix44.scale(-1, 1, 1) @ Matrix44.translate(width, 0, 0)
+    #     for entity in msp:
+    #         entity.transform(transform)
+            
+    doc.saveas(file_name)
 
-    # 5. Сохраняем изменения в тот же файл
-    doc.save()
-    print(f"✅ Файл отзеркален: {filepath}")
+
+

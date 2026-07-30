@@ -14,7 +14,8 @@ lock- для определения электронного
 import importlib
 import os
 import sys
-from mirror import mirror_dxf_horizontally
+from mirror import mirror_y_axis
+from method_ezdxf import move_all_x
 
 # Добавляем родительскую директорию в путь, чтобы можно было импортировать MakePanel как пакет
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,8 +34,7 @@ def MakePanel(model, pic, side, width, height):
     else:
         inout = 'in'
     
-    
-    # Рассчитываем размеры полотна из размеров проема (зазор 50мм
+
     found_alg = False
     for name in list_ready_pics:
         if name in pic: # если рисунок из нового списка, запускаем модуль с его именем
@@ -55,7 +55,8 @@ def MakePanel(model, pic, side, width, height):
     
     # После создания получившийся dxf файл нужно отзеркалить, если он левый
     if "L" in side:
-        mirror_dxf_horizontally(output_path)
+        mirror_y_axis(output_path, axis='x')
+
         
 if __name__ == "__main__":
-    MakePanel('DELTA PRO PP', 'L02_out', 'R', 950, 2100)
+    MakePanel('DELTA PRO PP', 'L02_out', 'L', 950, 2100)

@@ -207,6 +207,18 @@ def draw_rec_line(msp, x0, y0, x1, y1, color=7, layer="0"):
     draw_line(msp, x0, y1, x0, y0, color=color, layer=layer)  # Левая
 
 
+def move_all_x(msp, dx):
+    """
+    Сдвигает все объекты в пространстве модели по оси X.
+
+    Args:
+        msp: Modelspace
+        dx: Расстояние для сдвига по оси X
+    """
+    for entity in msp:
+        entity.translate(dx, 0, 0)
+
+
 def save_document(doc, filepath):
     """
     Сохраняет документ в файл.
