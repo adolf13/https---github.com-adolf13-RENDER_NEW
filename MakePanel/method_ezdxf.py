@@ -30,7 +30,7 @@ def get_modelspace(doc):
     return doc.modelspace()
 
 
-def draw_line(msp, x1, y1, x2, y2, color=7):
+def draw_line(msp, x1, y1, x2, y2, color=7, layer="0"):
     """
     Рисует линию в modelspace.
 
@@ -39,8 +39,9 @@ def draw_line(msp, x1, y1, x2, y2, color=7):
         x1, y1: Начальная точка
         x2, y2: Конечная точка
         color: Цвет (по умолчанию 7)
+        layer: Слой (по умолчанию "0")
     """
-    msp.add_line((x1, y1), (x2, y2), dxfattribs={'color': color})
+    msp.add_line((x1, y1), (x2, y2), dxfattribs={'color': color, 'layer': layer})
 
 
 def draw_arc(msp, x, y, radius, start_angle, end_angle, color=7):
@@ -170,7 +171,7 @@ def draw_polyline(msp, points, color=7, close=False):
     msp.add_lwpolyline(points, dxfattribs={'color': color}, close=close)
 
 
-def draw_rectangle(msp, x0, y0, x1, y1, color=7):
+def draw_rec_poly(msp, x0, y0, x1, y1, color=7, layer="0"):
     """
     Рисует прямоугольник в modelspace по двум точкам (полилинией).
 
@@ -179,12 +180,31 @@ def draw_rectangle(msp, x0, y0, x1, y1, color=7):
         x0, y0: Нижний левый угол
         x1, y1: Верхний правый угол
         color: Цвет (по умолчанию 7)
+        layer: Слой (по умолчанию "0")
     """
     msp.add_lwpolyline(
         [(x0, y0), (x1, y0), (x1, y1), (x0, y1)],
         close=True,
-        dxfattribs={'color': color}
+        dxfattribs={'color': color, 'layer': layer}
     )
+
+
+def draw_rec_line(msp, x0, y0, x1, y1, color=7, layer="0"):
+    """
+    Рисует прямоугольник в modelspace по двум точкам (линиями).
+
+    Args:
+        msp: Modelspace
+        x0, y0: Нижний левый угол
+        x1, y1: Верхний правый угол
+        color: Цвет (по умолчанию 7)
+        layer: Слой (по умолчанию "0")
+    """
+    # Рисуем 4 линии
+    draw_line(msp, x0, y0, x1, y0, color=color, layer=layer)  # Нижняя
+    draw_line(msp, x1, y0, x1, y1, color=color, layer=layer)  # Правая
+    draw_line(msp, x1, y1, x0, y1, color=color, layer=layer)  # Верхняя
+    draw_line(msp, x0, y1, x0, y0, color=color, layer=layer)  # Левая
 
 
 def save_document(doc, filepath):

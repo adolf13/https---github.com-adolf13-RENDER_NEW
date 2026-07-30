@@ -1,5 +1,5 @@
 """ Модуль для создания рисунка L01"""
-from method_ezdxf import create_document, get_modelspace, draw_line, draw_rectangle, save_document
+from method_ezdxf import create_document, get_modelspace, draw_line, draw_rec_line, save_document
 from size import size
 
 
@@ -26,10 +26,33 @@ def make(model, width, height, inout, output_path):
 
     x0, y0 = 0, 0
     x1, y1 = width_panel, height_panel
-    draw_rectangle(msp, x0, y0, x1, y1)
+    draw_rec_line(msp, x0, y0, x1, y1, layer="contour")
+    
+    
+    
+    # Теперь рисунок!
+    
+    lines_count=4 if height <= 2150 else 5
+
+    
+    
+    
+    
+    
+    
+    
 
     # 3. Сохраняем документ
     save_document(doc, output_path)
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
 if __name__ == "__main__":
