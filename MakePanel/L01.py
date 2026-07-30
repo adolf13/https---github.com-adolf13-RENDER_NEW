@@ -1,8 +1,9 @@
 """ Модуль для создания рисунка L01"""
 from . import method_ezdxf as dxf
+from size import size
 
 
-def make(model, width, height, inout ,output_path):
+def make(model, width, height, inout, output_path):
     """
     Создает DXF файл для рисунка L01.
 

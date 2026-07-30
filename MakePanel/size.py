@@ -22,7 +22,7 @@ def size(model, width_door, height_door, inout):
     parser = configparser.ConfigParser()
 
     # Путь к папке CONFIG, которая находится на уровень выше текущего модуля
-    config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'CONFIG'))
+    config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'CONFIG'))
     config_path = os.path.join(config_dir, f"{model}.ini")
 
     if not os.path.exists(config_path):
