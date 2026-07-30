@@ -13,6 +13,13 @@ lock- для определения электронного
 """
 import importlib
 import os
+import sys
+from mirror import mirror_dxf_horizontally
+
+# Добавляем родительскую директорию в путь, чтобы можно было импортировать MakePanel как пакет
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
 
 
 def MakePanel(model, pic, side, width, height):
@@ -32,14 +39,14 @@ def MakePanel(model, pic, side, width, height):
     for name in list_ready_pics:
         if name in pic: # если рисунок из нового списка, запускаем модуль с его именем
             try:
-                # Динамически импортируем модуль (например, .L01)
-                module = importlib.import_module(f".{name}", package="MakePanel")
+                # Динамически импортируем модуль (например, MakePanel.L01)
+                module = importlib.import_module(f"MakePanel.{name}")
                 # Вызываем функцию make с нужными аргументами
                 module.make(model, width, height, inout, output_path)
                 found_alg = True
                 break # Выходим из цикла, так как нашли нужный модуль
-            except ImportError:
-                print(f"⚠️ Не удалось найти модуль {name}.py")
+            except ImportError as e:
+                print(f"⚠️ Не удалось найти модуль {name}.py: {e}")
 
     if not found_alg:
         print(f"ℹ️  Для рисунка '{pic}' не найден алгоритм, будет запущен старый метод.")
@@ -48,4 +55,7 @@ def MakePanel(model, pic, side, width, height):
     
     # После создания получившийся dxf файл нужно отзеркалить, если он левый
     if "L" in side:
-        pass
+        mirror_dxf_horizontally(output_path)
+        
+if __name__ == "__main__":
+    MakePanel('DELTA PRO PP', 'L02_out', 'R', 950, 2100)
