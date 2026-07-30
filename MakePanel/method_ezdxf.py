@@ -195,6 +195,8 @@ def save_document(doc, filepath):
         doc: DXF документ
         filepath: Полный путь к файлу
     """
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    dir_name = os.path.dirname(filepath)
+    if dir_name:
+        os.makedirs(dir_name, exist_ok=True)
     doc.saveas(filepath)
     print(f"✅ Файл сохранен: {filepath}")
