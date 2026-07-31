@@ -3,7 +3,7 @@ from method_ezdxf import create_document, get_modelspace, draw_line, draw_rec_li
 from size import size
 
 
-def make(model, width, height, inout, output_path):
+def make(model, width, height, inout, output_path, furniture=''):
     """
     Создает DXF файл для рисунка L01.
 
@@ -33,6 +33,19 @@ def make(model, width, height, inout, output_path):
     # Теперь рисунок!
     
     lines_count=4 if height <= 2150 else 5
+    
+    # Для начала рассчитаем расстояние между линиями
+    size=height_panel/lines_count
+    
+    # Теперь нужно проверить все линии на пересечения с фурнитурой
+    
+    if 'HOGO' in furniture: # Если замок HOGO
+        pass
+    else:  # если замок не HOGO!
+        pass
+
+
+
 
     
     
