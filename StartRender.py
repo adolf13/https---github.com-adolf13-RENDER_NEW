@@ -222,6 +222,9 @@ def build_door_params(
     metal_root = MODULE_DIR / "textures" / "metal_color"
     pvc_root = MODULE_DIR / "textures" / "pvc_color"
     dxf_root = MODULE_DIR / "Pic"
+    
+    check_side='L' if is_left else 'R'
+    
 
     if output_dir is None:
         order_path = Path(
@@ -232,10 +235,10 @@ def build_door_params(
         order_path.mkdir(parents=True, exist_ok=False)
 
     out_dxf_name = make_scale_dxf(
-        out_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "out"
+        out_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "out", check_side
     )
     in_dxf_name = make_scale_dxf(
-        in_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "in"
+        in_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "in", check_side
     )
 
     is_mdf_door = "PP" in model.upper() or "NEXT" in model.upper()
@@ -358,7 +361,7 @@ def make_folder(tdot, current_dir):
     folder_path.mkdir(parents=True, exist_ok=False)
     return str(folder_path)
 
-def make_scale_dxf(name_dxf, width, height, dxf_path, order_path, inout):
+def make_scale_dxf(name_dxf, width, height, dxf_path, order_path, inout, check_side):
     from scale import scale_panel_by_opening
     
     # Формируем имя исходного и конечного файла
@@ -378,7 +381,8 @@ def make_scale_dxf(name_dxf, width, height, dxf_path, order_path, inout):
         order_path,
         opening_width,
         opening_height,
-        output_filename=output_filename,
+        check_side,
+        output_filename=output_filename
     )
     if result is None or not os.path.isfile(final_output_path):
         raise RuntimeError(f"Не удалось подготовить DXF: {source_path}")

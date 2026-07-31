@@ -11,6 +11,7 @@ import shutil
 from pathlib import Path
 from typing import Union, Optional, Tuple, List
 from ezdxf.math import Vec3, Matrix44
+from mirror import mirror_y_axis
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +26,8 @@ class PanelScaler:
     BASE_PANEL_HEIGHT = 2000.0
     
     # Зазор между проемом и полотном
-    CLEARANCE = 50.0  # 50 мм с каждой стороны (или 25+25)
     
-    def __init__(self, source_path: Union[str, Path], output_dir: Union[str, Path]):
+    def __init__(self, source_path: Union[str, Path], output_dir: Union[str, Path], side):
         """
         Инициализация масштабатора
         
@@ -42,6 +42,7 @@ class PanelScaler:
         # Слои для обработки
         self.contour_layer = "0"  # Контур панели
         self.pic_layer = "Pic"    # Траектории фрез
+        self.side=side
     
     def scale_panel(
         self, 
@@ -108,6 +109,10 @@ class PanelScaler:
             doc.saveas(str(output_path))
             logger.info(f"Файл сохранен: {output_path}")
             
+            if "L" in self.side:
+                print(f"Сторона левая ('{self.side}'). Запуск отзеркаливания для файла: {output_path}")
+                mirror_y_axis(output_path, axis='x')  
+            
             return output_path
             
         except Exception as e:
@@ -145,8 +150,8 @@ class PanelScaler:
             → масштаб: 830/900, 2000/2000
         """
         # Расчет размеров полотна из проема
-        panel_width = opening_width - self.CLEARANCE
-        panel_height = opening_height - self.CLEARANCE
+        panel_width = opening_width
+        panel_height = opening_height
         
         if panel_width <= 0 or panel_height <= 0:
             logger.error(f"Некорректные размеры проема: {opening_width}x{opening_height}")
@@ -332,8 +337,10 @@ def scale_panel_by_opening(
     output_dir: Union[str, Path],
     opening_width: float,
     opening_height: float,
+    check_side,
     preserve_ratio: bool = False,
-    output_filename: Optional[str] = None
+    output_filename: Optional[str] = None,
+    
 ) -> Optional[Path]:
     """
     Масштабирует DXF панели по размерам проема
@@ -342,7 +349,7 @@ def scale_panel_by_opening(
         scale_panel_by_opening("panel.dxf", "output/", 880, 2050)
         → полотно станет 830x2000
     """
-    scaler = PanelScaler(source_path, output_dir)
+    scaler = PanelScaler(source_path, output_dir, check_side)
     return scaler.scale_panel_by_opening(opening_width, opening_height, preserve_ratio, output_filename)
 
 
