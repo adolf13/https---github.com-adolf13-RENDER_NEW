@@ -18,17 +18,17 @@ if not objs:
 # Применяем сглаживание выборочно
 for obj in objs:
     if obj.type == 'MESH':
+        # Включаем сглаживание для всех объектов
         obj.data.shade_smooth()
-        # Объекты, которые должны быть сглаженными
-        smooth_objects = ['door_front', 'door_body', 'handle', 'plate', 'latch', 'peephole', 'hw_ring']
-        
-        # Если имя объекта или его материала содержит ключевое слово, сглаживаем
-        if any(keyword in obj.name.lower() for keyword in smooth_objects) or \
-           any(slot.material and any(keyword in slot.material.name.lower() for keyword in smooth_objects) for slot in obj.material_slots):
-            obj.data.shade_smooth()
-        else:
-            # Для всего остального (обналичка, стена, пол) используем плоское затенение
-            obj.data.shade_flat()
+
+        # Объекты, которые НЕ должны иметь искусственного сглаживания
+        flat_objects = ['casing', 'wall', 'floor', 'metal_frame']
+
+        # Если это обналичка, стена, пол или металлическая коробка - добавляем EdgeSplit
+        if any(keyword in obj.name.lower() for keyword in flat_objects) or \
+           any(slot.material and any(keyword in slot.material.name.lower() for keyword in flat_objects) for slot in obj.material_slots):
+            # Добавляем модификатор, который убирает "закругленный" эффект на плоских гранях
+            obj.modifiers.new(name='EdgeSplit', type='EDGE_SPLIT')
 
 # --------------------------------------------------
 # Свет
