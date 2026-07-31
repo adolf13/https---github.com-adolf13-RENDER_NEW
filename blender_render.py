@@ -15,9 +15,20 @@ objs = [o for o in bpy.context.scene.objects if o.type == 'MESH']
 if not objs:
     raise Exception("OBJ not imported")
 
+# Применяем сглаживание выборочно
 for obj in objs:
     if obj.type == 'MESH':
         obj.data.shade_smooth()
+        # Объекты, которые должны быть сглаженными
+        smooth_objects = ['door_front', 'door_body', 'handle', 'plate', 'latch', 'peephole', 'hw_ring']
+        
+        # Если имя объекта или его материала содержит ключевое слово, сглаживаем
+        if any(keyword in obj.name.lower() for keyword in smooth_objects) or \
+           any(slot.material and any(keyword in slot.material.name.lower() for keyword in smooth_objects) for slot in obj.material_slots):
+            obj.data.shade_smooth()
+        else:
+            # Для всего остального (обналичка, стена, пол) используем плоское затенение
+            obj.data.shade_flat()
 
 # --------------------------------------------------
 # Свет
@@ -251,7 +262,11 @@ cam = bpy.data.objects.new("Camera", cam_data)
 bpy.context.collection.objects.link(cam)
 scene.camera = cam
 
-distance = 5
+# Определяем расстояние до камеры в зависимости от стороны
+if '_out' in obj_path.lower():
+    distance = 5  # Отодвигаем камеру для наружной стороны
+else:
+    distance = 5  # Стандартное расстояние для внутренней стороны
 
 cam.location = (
     center.x + door_width * 0.7,
@@ -259,8 +274,8 @@ cam.location = (
     center.z + door_height * 0.06,
 )
 
-AIM_DOWN = door_height * 0.04
-look_target = Vector((center.x, center.y, center.z - AIM_DOWN))
+AIM_UP = door_height * 0.07  # Смещаем точку фокусировки на 5% высоты двери вверх
+look_target = Vector((center.x, center.y, center.z + AIM_UP))
 direction = look_target - cam.location
 rot_quat = direction.to_track_quat('-Z', 'Y')
 cam.rotation_euler = rot_quat.to_euler()
