@@ -54,4 +54,11 @@ decor/
 *.jpg
 *.png
 
+textures/
+frame/
+Pic/
+*.blend
+*.obj
+*.mtl
+
 
