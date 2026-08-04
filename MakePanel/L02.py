@@ -7,7 +7,7 @@ from size import size
 
 def make(model, width, height, inout, output_path):
     """
-    Создает DXF файл для рисунка L01.
+    Создает DXF файл для рисунка L02.
 
     Args:
         width (int): Ширина панели.
