@@ -52,14 +52,19 @@ class DoorParams:
     casing_color: Tuple[float, float, float] = config.DEFAULT_CASING_COLOR
 
     # Фурнитура
-    handle_path: Optional[str] = None
+    handle_path_out: Optional[str] = None
+    nakl_main_lock_out: Optional[str] = None
+    nakl_adv_lock_out: Optional[str] = None
+
+    handle_path_in: Optional[str] = None
+    nakl_main_lock_in: Optional[str] = None
+    nakl_adv_lock_in: Optional[str] = None
+    latch_path: Optional[str] = None
+
     # Глазок
     peephole_path: Optional[str] = None
     peephole_pos: str = "center"  # "center", "side-left", "side-right"
 
-    plate_path: Optional[str] = None
-    plate_path2: Optional[str] = None
-    latch_path: Optional[str] = None
     hinge_stl: Optional[str] = None
     hinge_finish: Optional[str] = None # Теперь это путь к текстуре
     hinge_count: int = 2
@@ -295,14 +300,14 @@ if __name__ == "__main__":
         hinge_finish=os.path.join(base_dir, "textures/Черная-шагрень-Ч.jpg"),
         hinge_count=3,
         
-        handle_path=to_obj_path(os.path.join(base_dir, "furniture/handle_LARGO_cr.obj")),
+        handle_path_out=to_obj_path(os.path.join(base_dir, "furniture/handle_LARGO_cr.obj")),
         
         peephole_path=to_obj_path(os.path.join(base_dir, "furniture/peep.obj")),
         peephole_pos="center",
         
-        plate_path=to_obj_path(os.path.join(base_dir, "furniture/BN_26_cr.obj")),
+        nakl_main_lock_out=to_obj_path(os.path.join(base_dir, "furniture/BN_26_cr.obj")),
         
-        plate_path2=to_obj_path(os.path.join(base_dir, "furniture/Nakl_Krit_cr.obj")),
+        nakl_adv_lock_out=to_obj_path(os.path.join(base_dir, "furniture/Nakl_Krit_cr.obj")),
         
         latch_path=to_obj_path(os.path.join(base_dir, "furniture/Pov_Apecs_bl.obj")),
         

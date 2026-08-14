@@ -36,6 +36,7 @@ def _configure_output_encoding() -> None:
 _configure_output_encoding()
 
 from main import DoorParams, generate_door
+from furniture_resolver import get_furniture_set
 
 
 SCENE_DEFAULTS = {
@@ -265,7 +266,10 @@ def build_door_params(
         texture_path = frame_finish_texture_path
         casing_texture_path = frame_finish_texture_path
 
-    handle_obj, plate_obj, latch_obj, plate_obj2 = get_furniture_set(furniture)
+    furniture_paths = get_furniture_set(furniture)
+    handle_out, nakl_main_out, nakl_adv_out = furniture_paths["out"]
+    handle_in, nakl_main_in, nakl_adv_in, latch = furniture_paths["in"]
+
     hinge_path = furniture_root / "hinge" / "pelta.stl"
     if not hinge_path.is_file():
         raise ValueError(f"Не найдена модель петли: {hinge_path}")
@@ -296,10 +300,13 @@ def build_door_params(
         hinge_finish=frame_finish_texture_path,
         hinge_count=hinge_count,
         # В OBJ уже указан MTL, поэтому отдельные цвета фурнитуры не нужны.
-        handle_path=handle_obj,
-        plate_path=plate_obj,
-        plate_path2=plate_obj2,
-        latch_path=latch_obj,
+        handle_path_out=handle_out,
+        nakl_main_lock_out=nakl_main_out,
+        nakl_adv_lock_out=nakl_adv_out,
+        handle_path_in=handle_in,
+        nakl_main_lock_in=nakl_main_in,
+        nakl_adv_lock_in=nakl_adv_in,
+        latch_path=latch,
         frame_metal=frame_metal,
         frame_stl=_frame_path(model, width, height),
         frame_finish=casing_texture_path,
@@ -387,158 +394,6 @@ def make_scale_dxf(name_dxf, width, height, dxf_path, order_path, inout, check_s
     if result is None or not os.path.isfile(final_output_path):
         raise RuntimeError(f"Не удалось подготовить DXF: {source_path}")
     return final_output_path
-
-
-def get_furniture_set(furniture_abbr):
-    """
-    Возвращает OBJ четырёх элементов комплекта в строгом порядке:
-    handle_obj, plate_obj, latch_obj, plate_obj2.
-
-    Каждый OBJ обязан иметь одноимённый MTL. Цвета фурнитуры отдельно
-    не передаются: экспортер забирает материалы непосредственно из MTL.
-    
-    Args:
-        furniture_abbr (str): Аббревиатура комплекта
-    
-    Returns:
-        tuple: (handle_obj, plate_obj, latch_obj, plate_obj2)
-    """
-    
-    # Словарь со всеми комплектами - порядок элементов строго соблюдается!
-    furniture_sets = {
-        "ХКР_МОН_ALFA": [
-            "Handle_INSPECTOR 93, Intecron_cr.obj",  # handle_stl
-            "Nakl_cyl_ Intecron_MOH-L F_cr.obj",      # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_so_sht_Intecron_cr.obj"         # plate_stl2
-        ],
-        "ХКР_МОН 3D_ALFA": [
-            "Handle_Apecs H-1582_cr.obj",             # handle_stl
-            "Nakl_suv_so_sht_Intecron_cr.obj",        # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_so_sht_Intecron_cr.obj"         # plate_stl2
-        ],
-        "ЧКВ_AP15_AP15": [
-            "Handle_Apecs H-1582_bl.obj",             # handle_stl
-            "Nakl_shtok_Apecs DP-15_bl.obj",          # plate_stl
-            "Pov_75mm_Apecs TT-1516.mini_bl.obj",     # latch_stl
-            "Nakl_cyl_Avers DP-15.mini_bl.obj"        # plate_stl2
-        ],
-        "ХКР_МОН_BOSTON": [
-            "Handle_BOSTON AR SN_CP-3_cr.obj",        # handle_stl
-            "Nakl_cyl_ Intecron_MOH-L F_cr.obj",      # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_so_sht_Intecron_cr.obj"         # plate_stl2
-        ],
-        "ХКР_БН МОН_ALFA": [
-            "Handle_INSPECTOR 93, Intecron_cr.obj",   # handle_stl
-            "brn_pustotelaya_cr.obj",                 # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_so_sht_Intecron_cr.obj"         # plate_stl2
-        ],
-        "ХКР_БН МОН_BOSTON": [
-            "Handle_BOSTON AR SN_CP-3_cr.obj",        # handle_stl
-            "brn_pustotelaya_cr.obj",                 # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_so_sht_Intecron_cr.obj"         # plate_stl2
-        ],
-        "ЧКВ_БН AP15_AP15": [
-            "Handle_Apecs H-1582_bl.obj",             # handle_stl
-            "brn_Avers Pro 50_11-DP-15_bl.obj",       # plate_stl
-            "Pov_75mm_Apecs TT-1516.mini_bl.obj",     # latch_stl
-            "Nakl_cyl_Avers DP-15.mini_bl.obj"        # plate_stl2
-        ],
-        "ХКВ_БН TORXL_TORXL": [
-            "Handle_Apecs H-1582_cr.obj",             # handle_stl
-            "brn_Avers Pro 50_11-DP-15_cr.obj",       # plate_stl
-            "Pov_75mm_Apecs TT-1516-8_75-CRS_cr.obj", # latch_stl
-            "Nakl_suv_s_avt_sht_Apecs_cr.obj"         # plate_stl2
-        ],
-        "ХКВ_TORXL_TORXL": [
-            "Handle_Apecs H-1582_cr.obj",             # handle_stl
-            "Nakl_shtok_Fuaro ESC 486_cr.obj",        # plate_stl
-            "Pov_75mm_Apecs TT-1516-8_75-CRS_cr.obj", # latch_stl
-            "Nakl_suv_s_avt_sht_Apecs_cr.obj"         # plate_stl2
-        ],
-        "ХКР_МОН 3D_LARGO": [
-            "Handle_LARGO RM SN_CP_cr.obj",           # handle_stl
-            "Nakl_suv_Intecron_MOH-3D_cr.obj",        # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_Krit_Kl_C13_22_cr.obj"          # plate_stl2
-        ],
-        "ХКР_БН КлС_LARGO": [
-            "Handle_LARGO RM SN_CP_cr.obj",           # handle_stl
-            "brn_26_cr.obj",                          # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_Krit_Kl_C13_cr.obj"             # plate_stl2
-        ],
-        "ХКР_МОН 3D_PAVA": [
-            "Handle_Pava LDР42-1CP-8 TECH)_cr.obj",   # handle_stl
-            "Nakl_suv_Intecron_MOH-3D_cr.obj",        # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_Krit_Kl_C13_cr.obj"             # plate_stl2
-        ],
-        "ХКР_БН КлС_PAVA": [
-            "Handle_Pava LDР42-1CP-8 TECH)_cr.obj",   # handle_stl
-            "brn_26_cr.obj",                          # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_Krit_Kl_C13_cr.obj"             # plate_stl2
-        ],
-        "ХКР_МОН_PAVA": [
-            "Handle_Pava LDР42-1CP-8 TECH)_cr.obj",   # handle_stl
-            "Nakl_suv_Intecron_MOH-3D_cr.obj",        # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_Krit_Kl_C13_cr.obj"             # plate_stl2
-        ],
-        "ЧКВ_USS_SKY": [
-            "Handle_Armadillo SKY USS BL-26_bl.obj",  # handle_stl
-            "Nakl_suv_Armadillo PS Protector_USS BL_bl.obj",  # plate_stl
-            "Pov_75mm_Armadilo BKW8_USS BL-26_bl.obj",        # latch_stl
-            "Nakl_suv_Armadillo PS Protector_USS BL_bl.obj"   # plate_stl2
-        ],
-        "ЧКВ_БН USS_SKY": [
-            "Handle_Armadillo SKY USS BL-26_bl.obj",  # handle_stl
-            "brn_Armadillo Protector_USS BL (42983)_bl.obj",  # plate_stl
-            "Pov_75mm_Armadilo BKW8_USS BL-26_bl.obj",        # latch_stl
-            "Nakl_suv_Armadillo PS Protector_USS BL_bl.obj"   # plate_stl2
-        ],
-        "ХКВ_БН USS_SKY": [
-            "Handle_Armadillo SKY USS BL-26_cr.obj",  # handle_stl
-            "brn_Armadillo Protector_USS BL_cr.obj",  # plate_stl
-            "Pov_75mm_Armadilo BKW8_USS BL-26_cr.obj",        # latch_stl
-            "Nakl_suv_Armadillo PS Protector_USS BL_cr.obj"   # plate_stl2
-        ],
-        "ХКР_БН КлС_KEA": [
-            "Handle_KEA (20341)_cr.obj",              # handle_stl
-            "brn_26_cr.obj",                          # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_Krit_Kl_C13_cr.obj"             # plate_stl2
-        ],
-        "ХКР_БН КлС_HOPPE": [
-            "Handle_Hoppe vitoria (65892)_cr.obj",    # handle_stl
-            "brn_26_cr.obj",                          # plate_stl
-            "Pov_50mm_plast_cr.obj",                  # latch_stl
-            "Nakl_suv_Krit_Kl_C13_22_cr.obj"          # plate_stl2
-        ]
-    }
-    
-    aliases = {
-        # В старой расшифровке перед LARGO встречался лишний пробел.
-        "ХКР_БН КлС _LARGO": "ХКР_БН КлС_LARGO",
-    }
-    key = aliases.get(str(furniture_abbr), str(furniture_abbr))
-    files = furniture_sets.get(key)
-    if not files:
-        raise ValueError(f"Комплект фурнитуры «{furniture_abbr}» не расшифрован")
-
-    paths = tuple(MODULE_DIR / "furniture" / filename for filename in files)
-    for obj_path in paths:
-        if not obj_path.is_file():
-            raise ValueError(f"Не найден OBJ фурнитуры: {obj_path.name}")
-        mtl_path = obj_path.with_suffix(".mtl")
-        if not mtl_path.is_file():
-            raise ValueError(f"Для OBJ фурнитуры не найден MTL: {mtl_path.name}")
-    return tuple(str(path) for path in paths)
 
 
 def _authorized(http_request) -> bool:

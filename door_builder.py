@@ -119,39 +119,37 @@ class DoorBuilder:
                 meshes.append((pm, "door_front", self.texture_path))
 
         # 3. Фурнитура
-        if self.params.handle_path:
-            handle_mesh = self._make_handle()
-            if handle_mesh:
-                print(f"🔩 Ручка: используется файл {handle_mesh[1]}")
-                meshes.append((handle_mesh[0], "handle", handle_mesh[1]))
+        if self.inner:
+            # Внутренняя сторона
+            if self.params.handle_path_in:
+                meshes.append(self._make_handle(self.params.handle_path_in, "handle_in"))
+            if self.params.nakl_main_lock_in:
+                meshes.append(self._make_plate(self.params.nakl_main_lock_in, "nakl_main_lock_in"))
+            if self.params.nakl_adv_lock_in:
+                meshes.append(self._make_plate2(self.params.nakl_adv_lock_in, "nakl_adv_lock_in"))
+            if self.params.latch_path:
+                latch_items = self._make_latch()
+                if latch_items:
+                    for p, kind, path in latch_items:
+                        print(f"🔒 Задвижка: используется файл {path}")
+                        mat_name = "latch"
+                        meshes.append((p, mat_name, path))
+        else:
+            # Внешняя сторона
+            if self.params.handle_path_out:
+                meshes.append(self._make_handle(self.params.handle_path_out, "handle_out"))
+            if self.params.nakl_main_lock_out:
+                meshes.append(self._make_plate(self.params.nakl_main_lock_out, "nakl_main_lock_out"))
+            if self.params.nakl_adv_lock_out:
+                meshes.append(self._make_plate2(self.params.nakl_adv_lock_out, "nakl_adv_lock_out"))
 
         if self.params.peephole_path:
             peephole_items = self._make_peephole()
             if peephole_items:
                 for p, kind, path in peephole_items:
                     print(f"👁️ Глазок: используется файл {path or self.params.peephole_path}")
-                    # Линзе назначаем зеркальный материал, остальному - ничего (используются из OBJ)
+                    # Линзе назначаем зеркальный материал, остальному — ничего (используются из OBJ)
                     mat_name = "hw_mirror" if kind == "mirror" else "peephole"
-                    meshes.append((p, mat_name, path))
-
-        if self.params.plate_path:
-            for pl, kind, path in (self._make_plate() or []):
-                print(f"🔩 Накладка 1: используется файл {path}")
-                mat_name = "plate"
-                meshes.append((pl, mat_name, path))
-
-        if self.params.plate_path2:
-            for pl, kind, path in (self._make_plate2() or []):
-                print(f"🔩 Накладка 2: используется файл {path}")
-                mat_name = "plate2"
-                meshes.append((pl, mat_name, path))
-
-        if self.params.latch_path and self.inner:
-            latch_items = self._make_latch()
-            if latch_items:
-                for p, kind, path in latch_items:
-                    print(f"🔒 Задвижка: используется файл {path}")
-                    mat_name = "hw_latch"
                     meshes.append((p, mat_name, path))
 
         # 4. Петли (только для внешней стороны)
@@ -260,10 +258,13 @@ class DoorBuilder:
 
         # --- Фурнитура ---
         # Убираем все свойства. Материалы должны браться только из MTL-файлов фурнитуры.
-        props["handle"] = {}
+        props["handle_out"] = {}
+        props["nakl_main_lock_out"] = {}
+        props["nakl_adv_lock_out"] = {}
+        props["handle_in"] = {}
+        props["nakl_main_lock_in"] = {}
+        props["nakl_adv_lock_in"] = {}
         props["latch"] = {}
-        props["plate"] = {}
-        props["plate2"] = {}
         props["peephole"] = {}
 
 
@@ -296,16 +297,16 @@ class DoorBuilder:
         m.compute_vertex_normals()
         return m
 
-    def _make_handle(self):
+    def _make_handle(self, obj_path: str, material_name: str):
         """Создает ручку из OBJ файла."""
         # Константы
         model_scale_factor = config.HANDLE_SCALE
         z_offset = 0.01
         handle_offset_x = config.HANDLE_OFFSET_MM * self.scale
         handle_height_y = config.HANDLE_HEIGHT_MM * self.scale
+        print(f"🔩 {material_name}: используется файл {obj_path}")
 
         # Загрузка OBJ
-        obj_path = self.params.handle_path # Теперь ожидаем .obj
         m = o3d.io.read_triangle_mesh(obj_path, True)
         if m.is_empty():
             print(f"Не удалось загрузить OBJ: {obj_path}")
@@ -329,7 +330,7 @@ class DoorBuilder:
         m.translate([xp, handle_height_y, 0])
 
         m.compute_vertex_normals()
-        return m, obj_path
+        return m, material_name, obj_path
 
     def _make_peephole(self):
         """Создает глазок из OBJ файла."""
@@ -394,16 +395,16 @@ class DoorBuilder:
         print("👁️ Глазок: используются материалы из MTL.")
         return [(m, None, obj_path), (mirror, "mirror", None)]
 
-    def _make_plate(self):
+    def _make_plate(self, obj_path: str, material_name: str):
         """Создает накладку из OBJ файла."""
         # Константы
         model_scale_factor = config.PLATE_SCALE
         z_offset = 0.001
         handle_offset_x = config.HANDLE_OFFSET_MM * self.scale
         plate_offset_y = (config.HANDLE_HEIGHT_MM + config.PLATE_OFFSET_Y_MM) * self.scale
+        print(f"🔩 {material_name}: используется файл {obj_path}")
         
         # Загрузка OBJ
-        obj_path = self.params.plate_path # Теперь ожидаем .obj
         m = o3d.io.read_triangle_mesh(obj_path, True)
         if m.is_empty():
             print(f"Не удалось загрузить OBJ: {obj_path}")
@@ -421,7 +422,7 @@ class DoorBuilder:
         m.translate([xp, plate_offset_y, 0])
 
         m.compute_vertex_normals()
-        return [(m, None, obj_path)]
+        return m, material_name, obj_path
 
     def _make_latch(self):
         """Создает задвижку из OBJ файла (только для внутренней стороны)."""
@@ -450,18 +451,18 @@ class DoorBuilder:
         m.translate([xp, latch_offset_y_mm * self.scale, 0])
 
         m.compute_vertex_normals()
-        return [(m, None, obj_path)]
+        return [(m, "latch", obj_path)]
 
-    def _make_plate2(self):
+    def _make_plate2(self, obj_path: str, material_name: str):
         """Создает вторую накладку из OBJ файла."""
         # Константы
         model_scale_factor = config.PLATE_SCALE
         z_offset = 0.001
         handle_offset_x = config.HANDLE_OFFSET_MM * self.scale
         plate_offset_y = (config.HANDLE_HEIGHT_MM + config.PLATE_OFFSET_Y_MM2) * self.scale
+        print(f"🔩 {material_name}: используется файл {obj_path}")
 
         # Загрузка OBJ
-        obj_path = self.params.plate_path2 # Теперь ожидаем .obj
         m = o3d.io.read_triangle_mesh(obj_path, True)
         if m.is_empty():
             print(f"Не удалось загрузить OBJ: {obj_path}")
@@ -479,7 +480,7 @@ class DoorBuilder:
         m.translate([xp, plate_offset_y, 0])
 
         m.compute_vertex_normals()
-        return [(m, None, obj_path)]
+        return m, material_name, obj_path
 
     def _make_hinges(self):
         """Создает петли с простым расчетом позиций"""
