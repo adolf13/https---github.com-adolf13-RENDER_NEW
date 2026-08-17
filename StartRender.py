@@ -82,17 +82,27 @@ def _optional_finish(value: Any) -> str | None:
     return text
 
 
-def _directory_by_name(root: Path, name: str, field_name: str) -> Path:
+def _directory_by_name(roots: list[Path], name: str, field_name: str) -> Path:
+    """Ищет директорию с текстурой в нескольких корневых каталогах."""
     normalized = name.strip().casefold().replace("ё", "е")
-    for directory in root.iterdir():
-        candidate = directory.name.casefold().replace("ё", "е")
-        if directory.is_dir() and candidate == normalized:
-            return directory
+    found_paths = []
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for directory in root.iterdir():
+            candidate = directory.name.casefold().replace("ё", "е")
+            if directory.is_dir() and candidate == normalized:
+                found_paths.append(directory)
+    
+    if len(found_paths) == 1:
+        return found_paths[0]
+    if len(found_paths) > 1:
+        raise ValueError(f"Для «{field_name}: {name}» найдено несколько папок текстур")
     raise ValueError(f"Для «{field_name}: {name}» не найдена папка текстуры")
 
 
-def _finish_texture(root: Path, name: str, field_name: str) -> str:
-    directory = _directory_by_name(root, name, field_name)
+def _finish_texture(roots: list[Path], name: str, field_name: str) -> str:
+    directory = _directory_by_name(roots, name, field_name)
     preferred = directory / f"{directory.name}_BaseColor.png"
     if preferred.is_file():
         return str(preferred)
@@ -120,7 +130,7 @@ def _metal_finish(data: dict[str, Any], metal_root: Path) -> str:
         trim_color = _optional_finish(data.get("11_Обналичка (цвет)"))
         if trim_color:
             try:
-                _directory_by_name(metal_root, trim_color, "Обналичка (цвет)")
+                _directory_by_name([metal_root], trim_color, "Обналичка (цвет)")
                 return trim_color
             except ValueError:
                 pass  # Если цвет обналички не найден как цвет металла, используем старую логику
@@ -141,7 +151,7 @@ def _metal_finish(data: dict[str, Any], metal_root: Path) -> str:
     # наружной отделки.
     outside_finish = str(data.get("04_Лицо (цвет)") or "").strip()
     try:
-        _directory_by_name(metal_root, outside_finish, "Цвет металла")
+        _directory_by_name([metal_root], outside_finish, "Цвет металла")
     except ValueError as exc:
         raise ValueError("В данных договора не удалось определить цвет металла") from exc
     return outside_finish
@@ -264,19 +274,19 @@ def build_door_params(
     is_mdf_door = "PP" in model.upper() or "NEXT" in model.upper()
     metal_color = _metal_finish(string_params, metal_root)
     frame_finish_texture_path = _finish_texture(
-        metal_root, metal_color, "Цвет металла"
+        [metal_root], metal_color, "Цвет металла"
     )
     texture_path_inner = _finish_texture(
-        pvc_root, in_color, "Внутренняя отделка (цвет)"
+        [pvc_root], in_color, "Внутренняя отделка (цвет)"
     )
 
     if is_mdf_door:
         frame_metal = False
         texture_path = _finish_texture(
-            pvc_root, out_color, "Наружная отделка (цвет)"
+            [pvc_root], out_color, "Наружная отделка (цвет)"
         )
         casing_texture_path = _finish_texture(
-            pvc_root,
+            [pvc_root, metal_root],  # Искать и в PVC, и в METAL
             trim_color or out_color,
             "Обналичка (цвет)",
         )
