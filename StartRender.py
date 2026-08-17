@@ -114,6 +114,17 @@ def _finish_texture(root: Path, name: str, field_name: str) -> str:
 
 
 def _metal_finish(data: dict[str, Any], metal_root: Path) -> str:
+    # Новое правило: для дверей NEXT цвет металла = цвет обналички
+    model = str(data.get("model") or "").upper()
+    if "NEXT" in model:
+        trim_color = _optional_finish(data.get("11_Обналичка (цвет)"))
+        if trim_color:
+            try:
+                _directory_by_name(metal_root, trim_color, "Обналичка (цвет)")
+                return trim_color
+            except ValueError:
+                pass  # Если цвет обналички не найден как цвет металла, используем старую логику
+
     options = data.get("options") or []
     if isinstance(options, str):
         options = [options]
