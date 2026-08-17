@@ -235,12 +235,20 @@ def build_door_params(
         order_path = Path(output_dir).resolve()
         order_path.mkdir(parents=True, exist_ok=False)
 
+
+
+    # здесь делается dxf для накладки  ==================================================================
+    # В конце out_dxf_name и in_dxf_name получают имена с dxf файлами накладок. Нам нужно: если для рисунка готов новый метод
+    # обработки - запустить его (MakePanel/main.py), иначе использовать старый метод (make_scale_dxf).
+    
     out_dxf_name = make_scale_dxf(
         out_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "out", check_side
     )
     in_dxf_name = make_scale_dxf(
         in_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "in", check_side
     )
+    
+    #  ==================================================================
 
     is_mdf_door = "PP" in model.upper() or "NEXT" in model.upper()
     metal_color = _metal_finish(string_params, metal_root)
