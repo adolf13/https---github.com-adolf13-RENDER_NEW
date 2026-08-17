@@ -1,6 +1,8 @@
 import bpy
 import sys
 import math
+import os
+import configparser
 from mathutils import Vector
 
 argv = sys.argv
@@ -252,9 +254,29 @@ door_height = max_z - min_z
 # но теперь смотрит точно на центр полотна
 # --------------------------------------------------
 
+# --- Загрузка настроек камеры из cam.ini ---
+config = configparser.ConfigParser()
+# Путь к cam.ini относительно blender_render.py
+ini_path = os.path.join(os.path.dirname(__file__), 'cam.ini')
+
+if os.path.exists(ini_path):
+    config.read(ini_path)
+    print(f"✅ Загружены настройки камеры из {ini_path}")
+else:
+    print(f"⚠️ Файл {ini_path} не найден, используются значения по умолчанию.")
+
+# Получаем значения с fallback
+lens_value = config.getfloat('Camera', 'lens', fallback=72)
+distance_out_value = config.getfloat('Camera', 'distance_out', fallback=5.0)
+distance_in_value = config.getfloat('Camera', 'distance_in', fallback=5.0)
+loc_x_factor = config.getfloat('Camera', 'location_x_factor', fallback=0.0)
+loc_z_factor = config.getfloat('Camera', 'location_z_factor', fallback=0.0)
+aim_up_factor_value = config.getfloat('Camera', 'aim_up_factor', fallback=0.07)
+
+
 cam_data = bpy.data.cameras.new("Camera")
 cam_data.type = 'PERSP'
-cam_data.lens = 72
+cam_data.lens = lens_value
 cam_data.clip_start = 0.01
 cam_data.clip_end = 100.0
 
@@ -264,17 +286,17 @@ scene.camera = cam
 
 # Определяем расстояние до камеры в зависимости от стороны
 if '_out' in obj_path.lower():
-    distance = 5  # Отодвигаем камеру для наружной стороны
+    distance = distance_out_value
 else:
-    distance = 5  # Стандартное расстояние для внутренней стороны
+    distance = distance_in_value
 
 cam.location = (
-    center.x + door_width * 0.7,
+    center.x + door_width * loc_x_factor,
     center.y - distance,
-    center.z + door_height * 0.06,
+    center.z + door_height * loc_z_factor,
 )
 
-AIM_UP = door_height * 0.07  # Смещаем точку фокусировки на 5% высоты двери вверх
+AIM_UP = door_height * aim_up_factor_value
 look_target = Vector((center.x, center.y, center.z + AIM_UP))
 direction = look_target - cam.location
 rot_quat = direction.to_track_quat('-Z', 'Y')
