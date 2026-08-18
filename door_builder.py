@@ -300,35 +300,57 @@ class DoorBuilder:
 
     def _make_handle(self, obj_path: str, material_name: str):
         """Создает ручку из OBJ файла."""
-        # Константы
+        # --- Определение координат из INI файла ---
+        x_pos_mm = None
+        y_pos_mm = None
+        try:
+            import configparser
+            parser = configparser.ConfigParser()
+            config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'MakePanel', 'CONFIG'))
+            config_path = os.path.join(config_dir, f"{self.params.model}.ini")
+            section = 'lock_in' if self.inner else 'lock_out'
+
+            if os.path.exists(config_path):
+                parser.read(config_path)
+                if parser.has_section(section):
+                    x_pos_mm = parser.getfloat(section, 'x_cent', fallback=None)
+                    y_pos_mm = parser.getfloat(section, 'y_cent', fallback=None)
+                    print(f"🔩 {material_name}: координаты ({x_pos_mm}, {y_pos_mm}) взяты из '{config_path}' секция [{section}]")
+        except Exception as e:
+            print(f"⚠️ Ошибка при чтении INI для ручки: {e}")
+
+        # Если координаты не найдены, используем значения по умолчанию
+        if x_pos_mm is None:
+            x_pos_mm = config.HANDLE_OFFSET_MM
+            print(f"🔩 {material_name}: используется x_pos по умолчанию {x_pos_mm} мм")
+        if y_pos_mm is None:
+            y_pos_mm = config.HANDLE_HEIGHT_MM
+            print(f"🔩 {material_name}: используется y_pos по умолчанию {y_pos_mm} мм")
+
+        # Константы и загрузка
         model_scale_factor = config.HANDLE_SCALE
         z_offset = 0.01
-        handle_offset_x = config.HANDLE_OFFSET_MM * self.scale
-        handle_height_y = config.HANDLE_HEIGHT_MM * self.scale
         print(f"🔩 {material_name}: используется файл {obj_path}")
 
-        # Загрузка OBJ
         m = o3d.io.read_triangle_mesh(obj_path, True)
         if m.is_empty():
             print(f"Не удалось загрузить OBJ: {obj_path}")
             return None
 
-        # Трансформации
+        # --- Трансформации ---
         mn, mx = bbox(m)
         m.translate([0, -(mn[1] + mx[1]) / 2, 0])
         m.scale(model_scale_factor, center=[0, 0, 0])
 
         if self.side == "L":
-            v = np.asarray(m.vertices)
-            v[:, 0] *= -1
-            m.vertices = o3d.utility.Vector3dVector(v)
-            m.compute_vertex_normals()
+            # Зеркалим геометрию ручки для левой стороны
+            m.transform(np.array([[-1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]))
 
         mn2, _ = bbox(m)
         m.translate([0, 0, self.door_thickness - mn2[2] + z_offset])
 
-        xp = handle_offset_x if self.side == "R" else self.door_width - handle_offset_x
-        m.translate([xp, handle_height_y, 0])
+        xp = x_pos_mm * self.scale if self.side == "R" else self.door_width - (x_pos_mm * self.scale)
+        m.translate([xp, y_pos_mm * self.scale, 0])
 
         m.compute_vertex_normals()
         return m, material_name, obj_path
@@ -435,20 +457,47 @@ class DoorBuilder:
 
     def _make_plate(self, obj_path: str, material_name: str):
         """Создает накладку из OBJ файла."""
-        # Константы
+        # --- Определение координат из INI файла ---
+        x_pos_mm = None
+        y_pos_mm = None
+        try:
+            import configparser
+            parser = configparser.ConfigParser()
+            config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'MakePanel', 'CONFIG'))
+            config_path = os.path.join(config_dir, f"{self.params.model}.ini")
+            section = 'lock_in' if self.inner else 'lock_out'
+
+            if os.path.exists(config_path):
+                parser.read(config_path)
+                if parser.has_section(section):
+                    x_pos_mm = parser.getfloat(section, 'x_cent', fallback=None)
+                    y_cent_mm = parser.getfloat(section, 'y_cent', fallback=None)
+                    size_to_fig2_mm = parser.getfloat(section, 'size_to_fig2', fallback=None)
+                    if y_cent_mm is not None and size_to_fig2_mm is not None:
+                        y_pos_mm = y_cent_mm - size_to_fig2_mm
+                    print(f"🔩 {material_name}: координаты ({x_pos_mm}, {y_pos_mm}) взяты из '{config_path}' секция [{section}]")
+        except Exception as e:
+            print(f"⚠️ Ошибка при чтении INI для накладки: {e}")
+
+        # Если координаты не найдены, используем значения по умолчанию
+        if x_pos_mm is None:
+            x_pos_mm = config.HANDLE_OFFSET_MM
+            print(f"🔩 {material_name}: используется x_pos по умолчанию {x_pos_mm} мм")
+        if y_pos_mm is None:
+            y_pos_mm = config.HANDLE_HEIGHT_MM + config.PLATE_OFFSET_Y_MM
+            print(f"🔩 {material_name}: используется y_pos по умолчанию {y_pos_mm} мм")
+
+        # Загрузка и константы
         model_scale_factor = config.PLATE_SCALE
         z_offset = 0.001
-        handle_offset_x = config.HANDLE_OFFSET_MM * self.scale
-        plate_offset_y = (config.HANDLE_HEIGHT_MM + config.PLATE_OFFSET_Y_MM) * self.scale
         print(f"🔩 {material_name}: используется файл {obj_path}")
         
-        # Загрузка OBJ
         m = o3d.io.read_triangle_mesh(obj_path, True)
         if m.is_empty():
             print(f"Не удалось загрузить OBJ: {obj_path}")
             return None
 
-        # Трансформации
+        # --- Трансформации ---
         mn, mx = bbox(m)
         m.translate([-(mn[0] + mx[0]) / 2, 0, 0])
         m.scale(model_scale_factor, center=[0, 0, 0])
@@ -456,8 +505,8 @@ class DoorBuilder:
         mn2, _ = bbox(m)
         m.translate([0, 0, self.door_thickness - mn2[2] + z_offset])
 
-        xp = handle_offset_x if self.side == "R" else self.door_width - handle_offset_x
-        m.translate([xp, plate_offset_y, 0])
+        xp = x_pos_mm * self.scale if self.side == "R" else self.door_width - (x_pos_mm * self.scale)
+        m.translate([xp, y_pos_mm * self.scale, 0])
 
         m.compute_vertex_normals()
         return m, material_name, obj_path
@@ -465,18 +514,45 @@ class DoorBuilder:
     def _make_latch(self):
         """Создает задвижку из OBJ файла (только для внутренней стороны)."""
         # Константы
+        # --- Определение координат из INI файла ---
+        x_pos_mm = None
+        y_pos_mm = None
+        try:
+            import configparser
+            parser = configparser.ConfigParser()
+            config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'MakePanel', 'CONFIG'))
+            config_path = os.path.join(config_dir, f"{self.params.model}.ini")
+            
+            if os.path.exists(config_path):
+                parser.read(config_path)
+                if parser.has_section('latch_in') and parser.has_section('lock_in'):
+                    x_pos_mm = parser.getfloat('latch_in', 'x_cent', fallback=None)
+                    y_cent_lock_mm = parser.getfloat('lock_in', 'y_cent', fallback=None)
+                    from_y_cent_latch_mm = parser.getfloat('latch_in', 'from_y_cent', fallback=None)
+                    if y_cent_lock_mm is not None and from_y_cent_latch_mm is not None:
+                        y_pos_mm = y_cent_lock_mm + from_y_cent_latch_mm
+                    print(f"🔩 Задвижка: координаты ({x_pos_mm}, {y_pos_mm}) взяты из '{config_path}'")
+        except Exception as e:
+            print(f"⚠️ Ошибка при чтении INI для задвижки: {e}")
+
+        # Если координаты не найдены, используем значения по умолчанию
+        if x_pos_mm is None:
+            x_pos_mm = config.HANDLE_OFFSET_MM
+            print(f"🔩 Задвижка: используется x_pos по умолчанию {x_pos_mm} мм")
+        if y_pos_mm is None:
+            y_pos_mm = config.HANDLE_HEIGHT_MM + config.LATCH_OFFSET_Y_MM
+            print(f"🔩 Задвижка: используется y_pos по умолчанию {y_pos_mm} мм")
+
+        # Загрузка и константы
         model_scale_factor = config.LATCH_SCALE
         z_offset =-0.05
-        latch_offset_y_mm = config.HANDLE_HEIGHT_MM + config.LATCH_OFFSET_Y_MM
-
-        # Загрузка OBJ
         obj_path = self.params.latch_path # Теперь ожидаем .obj
         m = o3d.io.read_triangle_mesh(obj_path, True)
         if m.is_empty():
             print(f"Не удалось загрузить OBJ: {obj_path}")
             return None
 
-        # Трансформации
+        # --- Трансформации ---
         mn, mx = bbox(m)
         m.translate([-(mn[0] + mx[0]) / 2, 0, 0])
         rot(m, 0, 0, 0)
@@ -485,8 +561,8 @@ class DoorBuilder:
         mn2, _ = bbox(m)
         m.translate([0, 0, self.door_thickness - mn2[2] + z_offset])
 
-        xp = config.HANDLE_OFFSET_MM * self.scale if self.side == "R" else self.door_width - (config.HANDLE_OFFSET_MM * self.scale)
-        m.translate([xp, latch_offset_y_mm * self.scale, 0])
+        xp = x_pos_mm * self.scale if self.side == "R" else self.door_width - (x_pos_mm * self.scale)
+        m.translate([xp, y_pos_mm * self.scale, 0])
 
         m.compute_vertex_normals()
         return [(m, "latch", obj_path)]
@@ -494,19 +570,48 @@ class DoorBuilder:
     def _make_plate2(self, obj_path: str, material_name: str):
         """Создает вторую накладку из OBJ файла."""
         # Константы
+        # --- Определение координат из INI файла ---
+        x_pos_mm = None
+        y_pos_mm = None
+        try:
+            import configparser
+            parser = configparser.ConfigParser()
+            config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'MakePanel', 'CONFIG'))
+            config_path = os.path.join(config_dir, f"{self.params.model}.ini")
+            lock_section = 'lock_in' if self.inner else 'lock_out' # e.g., lock_out
+            adv_section = 'adv_in' if self.inner else 'adv_out'     # e.g., adv_out
+
+            if os.path.exists(config_path):
+                parser.read(config_path)
+                if parser.has_section(lock_section) and parser.has_section(adv_section):
+                    x_pos_mm = parser.getfloat(adv_section, 'x_cent', fallback=None)
+                    y_cent_lock_mm = parser.getfloat(lock_section, 'y_cent', fallback=None)
+                    from_y_cent_adv_mm = parser.getfloat(adv_section, 'from_y_cent', fallback=None)
+                    if y_cent_lock_mm is not None and from_y_cent_adv_mm is not None:
+                        y_pos_mm = y_cent_lock_mm + from_y_cent_adv_mm
+                    print(f"🔩 {material_name}: координаты ({x_pos_mm}, {y_pos_mm}) взяты из '{config_path}'")
+        except Exception as e:
+            print(f"⚠️ Ошибка при чтении INI для доп. накладки: {e}")
+
+        # Если координаты не найдены, используем значения по умолчанию
+        if x_pos_mm is None:
+            x_pos_mm = config.HANDLE_OFFSET_MM
+            print(f"🔩 {material_name}: используется x_pos по умолчанию {x_pos_mm} мм")
+        if y_pos_mm is None:
+            y_pos_mm = config.HANDLE_HEIGHT_MM + config.PLATE_OFFSET_Y_MM2
+            print(f"🔩 {material_name}: используется y_pos по умолчанию {y_pos_mm} мм")
+
+        # Загрузка и константы
         model_scale_factor = config.PLATE_SCALE
         z_offset = 0.001
-        handle_offset_x = config.HANDLE_OFFSET_MM * self.scale
-        plate_offset_y = (config.HANDLE_HEIGHT_MM + config.PLATE_OFFSET_Y_MM2) * self.scale
         print(f"🔩 {material_name}: используется файл {obj_path}")
 
-        # Загрузка OBJ
         m = o3d.io.read_triangle_mesh(obj_path, True)
         if m.is_empty():
             print(f"Не удалось загрузить OBJ: {obj_path}")
             return None
 
-        # Трансформации
+        # --- Трансформации ---
         mn, mx = bbox(m)
         m.translate([-(mn[0] + mx[0]) / 2, 0, 0])
         m.scale(model_scale_factor, center=[0, 0, 0])
@@ -514,8 +619,9 @@ class DoorBuilder:
         mn2, _ = bbox(m)
         m.translate([0, 0, self.door_thickness - mn2[2] + z_offset])
 
-        xp = handle_offset_x if self.side == "R" else self.door_width - handle_offset_x
-        m.translate([xp, plate_offset_y, 0])
+        xp = x_pos_mm * self.scale if self.side == "R" else self.door_width - (x_pos_mm * self.scale)
+        print(f"🔩 {material_name}: Финальная координата X = {xp:.4f} м (исходная: {x_pos_mm} мм, сторона: {self.side})")
+        m.translate([xp, y_pos_mm * self.scale, 0])
 
         m.compute_vertex_normals()
         return m, material_name, obj_path

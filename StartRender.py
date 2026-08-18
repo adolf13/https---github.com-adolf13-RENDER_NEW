@@ -322,6 +322,7 @@ def build_door_params(
         pff=_number(string_params, "pff", 85.0),
         zff=_number(string_params, "zff", 85.0),
         vff=_number(string_params, "vff", 85.0),
+        model=model,
         side=side,
         hinge_stl=str(hinge_path),
         hinge_finish=frame_finish_texture_path,

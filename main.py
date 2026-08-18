@@ -44,6 +44,7 @@ class DoorParams:
     pff: float
     vff: float
 
+    model: str
 
     # Опциональные параметры (с значениями по умолчанию из config)
     side: Optional[str] = "R"
