@@ -51,17 +51,21 @@ def find_blender() -> Optional[str]:
     return None
 
 
-def render_with_blender(obj_path: str, output_png: str) -> bool:
+def render_with_blender(obj_path: str, output_png: str, params: Optional[dict] = None) -> bool:
     """
     Рендерит OBJ файл через Blender
 
     Args:
         obj_path: Путь к OBJ файлу
         output_png: Путь для сохранения PNG
+        params: Дополнительные параметры для передачи в скрипт
 
     Returns:
         True если рендеринг успешен, иначе False
     """
+    if params is None:
+        params = {}
+
     # Ищем Blender
     blender_exe = find_blender()
     if blender_exe is None:
@@ -79,16 +83,22 @@ def render_with_blender(obj_path: str, output_png: str) -> bool:
 
     print(f"🎨 Рендеринг: {os.path.basename(obj_path)} → {os.path.basename(output_png)}")
 
+    # Формируем команду
+    command = [
+        blender_exe,
+        "--background",
+        "--python", blender_script,
+        "--",
+        os.path.abspath(obj_path),
+        os.path.abspath(output_png)
+    ]
+    # Добавляем доп. параметры
+    for key, value in params.items():
+        command.extend([f"--{key}", str(value)])
+
     try:
         # Используем полный путь к Blender
-        result = subprocess.run([
-            blender_exe,
-            "--background",
-            "--python", blender_script,
-            "--",
-            os.path.abspath(obj_path),
-            os.path.abspath(output_png)
-        ],
+        result = subprocess.run(command,
             cwd=os.path.dirname(os.path.abspath(obj_path)),
             capture_output=True,
             text=True,  # Декодировать stdout/stderr как текст
@@ -119,16 +129,17 @@ def render_with_blender(obj_path: str, output_png: str) -> bool:
         return False
 
 
-def render_both_sides(output_path: str) -> Tuple[bool, bool]:
+def render_both_sides(params) -> Tuple[bool, bool]:
     """
     Рендерит обе стороны двери (внешнюю и внутреннюю)
 
     Args:
-        output_path: Базовый путь к OBJ файлам (без _out/_in)
+        params: Объект DoorParams с параметрами двери.
 
     Returns:
         (внешняя_успешно, внутренняя_успешно)
     """
+    output_path = params.output_path
     out_obj = f"{output_path}_out.obj"
     in_obj = f"{output_path}_in.obj"
     out_png = f"{output_path}_out.png"
@@ -148,14 +159,18 @@ def render_both_sides(output_path: str) -> Tuple[bool, bool]:
     # Рендерим внешнюю сторону
     if os.path.exists(out_obj):
         print(f"\n📸 Рендеринг внешней стороны...")
-        success_out = render_with_blender(out_obj, out_png)
+        render_params = {
+            "pff": params.pff,
+            "zff": params.zff
+        }
+        success_out = render_with_blender(out_obj, out_png, render_params)
     else:
         print(f"⚠️ Файл не найден: {out_obj}")
 
     # Рендерим внутреннюю сторону
     if os.path.exists(in_obj):
         print(f"\n📸 Рендеринг внутренней стороны...")
-        success_in = render_with_blender(in_obj, in_png)
+        success_in = render_with_blender(in_obj, in_png) # Без доп. параметров
     else:
         print(f"⚠️ Файл не найден: {in_obj}")
 

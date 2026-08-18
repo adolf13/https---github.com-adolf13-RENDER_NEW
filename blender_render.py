@@ -1,14 +1,26 @@
 import bpy
 import sys
 import math
+import argparse
 import os
 import configparser
 from mathutils import Vector
 
-argv = sys.argv
-argv = argv[argv.index("--") + 1:]
-obj_path = argv[0]
-output_path = argv[1]
+# --- Парсинг аргументов ---
+parser = argparse.ArgumentParser()
+parser.add_argument("obj_path")
+parser.add_argument("output_path")
+parser.add_argument("--pff", type=float, default=85.0)
+parser.add_argument("--zff", type=float, default=85.0)
+
+# Blender передает аргументы после '--'
+args_to_parse = sys.argv[sys.argv.index("--") + 1:]
+args = parser.parse_args(args_to_parse)
+
+obj_path = args.obj_path
+output_path = args.output_path
+pff = args.pff
+zff = args.zff
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.wm.obj_import(filepath=obj_path)
@@ -265,30 +277,45 @@ if os.path.exists(ini_path):
 else:
     print(f"⚠️ Файл {ini_path} не найден, используются значения по умолчанию.")
 
-# Получаем значения с fallback
-lens_value = config.getfloat('Camera', 'lens', fallback=72)
-distance_out_value = config.getfloat('Camera', 'distance_out', fallback=5.0)
-distance_in_value = config.getfloat('Camera', 'distance_in', fallback=5.0)
-loc_x_factor = config.getfloat('Camera', 'location_x_factor', fallback=0.0)
-loc_z_factor = config.getfloat('Camera', 'location_z_factor', fallback=0.0)
-aim_up_factor_value = config.getfloat('Camera', 'aim_up_factor', fallback=0.07)
+# Определяем, какая сторона рендерится
+is_out_side = '_out' in obj_path.lower()
 
+if is_out_side:
+    # --- Настройки для ВНЕШНЕЙ стороны ---
+    section = 'Camera_out'
+    lens_value = config.getfloat(section, 'lens', fallback=72)
+    base_distance = config.getfloat(section, 'base_distance', fallback=5.0)
+    loc_x_factor = config.getfloat(section, 'location_x_factor', fallback=-1.0)
+    loc_z_factor = config.getfloat(section, 'location_z_factor', fallback=0.0)
+    aim_up_factor_value = config.getfloat(section, 'aim_up_factor', fallback=-0.02)
+
+    # Динамический расчет расстояния
+    standard_casing_width = 85.0
+    max_casing_width = max(pff, zff)
+    if max_casing_width > standard_casing_width:
+        # Коэффициент увеличения расстояния. 1.5 - эмпирический множитель.
+        distance_factor = (max_casing_width / standard_casing_width) * 1.5
+        distance = base_distance * distance_factor
+        print(f"✅ Динамическое расстояние: наличник {max_casing_width}мм > 85мм. Дистанция камеры увеличена до {distance:.2f}м.")
+    else:
+        distance = base_distance
+else:
+    # --- Настройки для ВНУТРЕННЕЙ стороны ---
+    section = 'Camera_in'
+    lens_value = config.getfloat(section, 'lens', fallback=72)
+    distance = config.getfloat(section, 'distance', fallback=5.0)
+    loc_x_factor = config.getfloat(section, 'location_x_factor', fallback=0.0)
+    loc_z_factor = config.getfloat(section, 'location_z_factor', fallback=0.0)
+    aim_up_factor_value = config.getfloat(section, 'aim_up_factor', fallback=0.07)
 
 cam_data = bpy.data.cameras.new("Camera")
 cam_data.type = 'PERSP'
 cam_data.lens = lens_value
 cam_data.clip_start = 0.01
 cam_data.clip_end = 100.0
-
 cam = bpy.data.objects.new("Camera", cam_data)
 bpy.context.collection.objects.link(cam)
 scene.camera = cam
-
-# Определяем расстояние до камеры в зависимости от стороны
-if '_out' in obj_path.lower():
-    distance = distance_out_value
-else:
-    distance = distance_in_value
 
 cam.location = (
     center.x + door_width * loc_x_factor,

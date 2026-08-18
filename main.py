@@ -181,7 +181,7 @@ def generate_door(params: DoorParams):
         print("🎨 Запуск автоматического рендеринга...")
         print(f"{'=' * 60}")
 
-        out_success, in_success = render_both_sides(params.output_path)
+        out_success, in_success = render_both_sides(params)
 
         if out_success:
             print(f"✅ Рендер внешней: {params.output_path}_out.png")
