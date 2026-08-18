@@ -143,6 +143,7 @@ class DoorBuilder:
             if self.params.nakl_adv_lock_out:
                 meshes.append(self._make_plate2(self.params.nakl_adv_lock_out, "nakl_adv_lock_out"))
 
+        # Глазок =================================================
         if self.params.peephole_path:
             peephole_items = self._make_peephole()
             if peephole_items:
@@ -333,13 +334,36 @@ class DoorBuilder:
         return m, material_name, obj_path
 
     def _make_peephole(self):
-        """Создает глазок из OBJ файла."""
+        """Создает глазок из OBJ файла, используя координаты из INI-файла модели."""
         # Константы
         scale_factor = config.PEEPHOLE_SCALE
         z_offset = 0.005
         inset_x = config.PEEPHOLE_INSET_MM * 0.001
-        height_y = config.PEEPHOLE_HEIGHT_MM * 0.001
-        
+
+        # --- Определение высоты глазка из INI файла ---
+        height_y = None
+        try:
+            import configparser
+            parser = configparser.ConfigParser()
+            # Путь к папке с конфигами относительно этого файла
+            config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'MakePanel', 'CONFIG'))
+            config_path = os.path.join(config_dir, f"{self.params.model}.ini")
+
+            if os.path.exists(config_path):
+                parser.read(config_path)
+                section = 'peep_in' if self.inner else 'peep_out'
+                if parser.has_section(section) and parser.has_option(section, 'size_from_down'):
+                    height_y_mm = parser.getfloat(section, 'size_from_down')
+                    height_y = height_y_mm * 0.001  # Переводим в метры
+                    print(f"👁️ Глазок: высота {height_y_mm} мм взята из '{config_path}' секция [{section}]")
+        except Exception as e:
+            print(f"⚠️ Ошибка при чтении INI для глазка: {e}")
+
+        # Если высота не была найдена в INI, используем значение по умолчанию
+        if height_y is None:
+            height_y = config.PEEPHOLE_HEIGHT_MM * 0.001
+            print(f"👁️ Глазок: используется высота по умолчанию {config.PEEPHOLE_HEIGHT_MM} мм")
+
         # Загрузка OBJ
         obj_path = self.params.peephole_path # Теперь ожидаем .obj
         m = o3d.io.read_triangle_mesh(obj_path, True)
