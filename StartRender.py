@@ -307,9 +307,7 @@ def build_door_params(
     peephole_path = furniture_root / "Peep.obj"
     if peep_enabled and not peephole_path.is_file():
         raise ValueError(f"Не найдена модель глазка: {peephole_path}")
-    peephole_pos = (
-        "side-left" if _flag(string_params.get("peep_offset")) else "center"
-    )
+    peephole_offset_flag = _flag(string_params.get("peep_offset"))
 
     panel_width = width - 50.0
     panel_height = height - 50.0
@@ -355,7 +353,7 @@ def build_door_params(
             SCENE_DEFAULTS["floor_texture_path_inner"],
         ),
         peephole_path=str(peephole_path) if peep_enabled else None,
-        peephole_pos=peephole_pos,
+        peephole_offset=peephole_offset_flag,
     )
 
 

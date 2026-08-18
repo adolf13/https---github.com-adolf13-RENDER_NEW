@@ -338,24 +338,30 @@ class DoorBuilder:
         # Константы
         scale_factor = config.PEEPHOLE_SCALE
         z_offset = 0.005
-        inset_x = config.PEEPHOLE_INSET_MM * 0.001
 
         # --- Определение высоты глазка из INI файла ---
         height_y = None
+        side_inset_mm = None
+
         try:
             import configparser
             parser = configparser.ConfigParser()
             # Путь к папке с конфигами относительно этого файла
             config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'MakePanel', 'CONFIG'))
             config_path = os.path.join(config_dir, f"{self.params.model}.ini")
+            section = 'peep_in' if self.inner else 'peep_out'
 
             if os.path.exists(config_path):
                 parser.read(config_path)
-                section = 'peep_in' if self.inner else 'peep_out'
                 if parser.has_section(section) and parser.has_option(section, 'size_from_down'):
                     height_y_mm = parser.getfloat(section, 'size_from_down')
                     height_y = height_y_mm * 0.001  # Переводим в метры
                     print(f"👁️ Глазок: высота {height_y_mm} мм взята из '{config_path}' секция [{section}]")
+                
+                if self.params.peephole_offset and parser.has_section(section) and parser.has_option(section, 'side_peephole'):
+                    side_inset_mm = parser.getfloat(section, 'side_peephole')
+                    print(f"👁️ Глазок: боковой отступ {side_inset_mm} мм взят из '{config_path}' секция [{section}]")
+
         except Exception as e:
             print(f"⚠️ Ошибка при чтении INI для глазка: {e}")
 
@@ -363,6 +369,11 @@ class DoorBuilder:
         if height_y is None:
             height_y = config.PEEPHOLE_HEIGHT_MM * 0.001
             print(f"👁️ Глазок: используется высота по умолчанию {config.PEEPHOLE_HEIGHT_MM} мм")
+        
+        # Если боковой отступ не найден в INI, используем значение по умолчанию
+        if self.params.peephole_offset and side_inset_mm is None:
+            side_inset_mm = config.PEEPHOLE_INSET_MM
+            print(f"👁️ Глазок: используется боковой отступ по умолчанию {side_inset_mm} мм")
 
         # Загрузка OBJ
         obj_path = self.params.peephole_path # Теперь ожидаем .obj
@@ -384,12 +395,15 @@ class DoorBuilder:
         m.translate([0, 0, (self.door_thickness + z_offset) - mx2[2]])
 
         # 4. Позиционируем по XY
-        if self.params.peephole_pos == "center":
+        if not self.params.peephole_offset:
+            # Если флаг смещения НЕ установлен - ставим по центру
             xp = self.door_width / 2
-        elif self.params.peephole_pos == "side-right":
-            xp = self.door_width - inset_x
+            print("👁️ Глазок: позиционирование по центру.")
         else:
-            xp = inset_x
+            # Если флаг смещения установлен - используем боковой отступ
+            inset_x = side_inset_mm * 0.001
+            xp = self.door_width - inset_x if self.side == 'L' else inset_x
+            print(f"👁️ Глазок: позиционирование сбоку (сторона: {self.side}, отступ: {inset_x*1000:.1f} мм).")
         m.translate([xp, height_y, 0])
 
         m.compute_vertex_normals()

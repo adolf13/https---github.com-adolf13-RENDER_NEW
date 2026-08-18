@@ -63,7 +63,7 @@ class DoorParams:
 
     # Глазок
     peephole_path: Optional[str] = None
-    peephole_pos: str = "center"  # "center", "side-left", "side-right"
+    peephole_offset: bool = False
 
     hinge_stl: Optional[str] = None
     hinge_finish: Optional[str] = None # Теперь это путь к текстуре
