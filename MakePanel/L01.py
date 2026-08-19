@@ -1,5 +1,5 @@
 """ Модуль для создания рисунка L01"""
-from method_ezdxf import create_document, get_modelspace, draw_line, draw_rec_line, save_document
+from .method_ezdxf import create_document, get_modelspace, draw_line, draw_rec_line, save_document
 from size import size
 import configparser
 import os

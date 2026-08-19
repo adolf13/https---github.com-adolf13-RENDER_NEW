@@ -14,8 +14,8 @@ lock- для определения электронного
 import importlib
 import os
 import sys
-from mirror import mirror_y_axis
-from method_ezdxf import move_all_x
+from .mirror import mirror_y_axis
+from .method_ezdxf import move_all_x
 
 # Добавляем родительскую директорию в путь, чтобы можно было импортировать MakePanel как пакет
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,12 +23,8 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
 
-def MakePanel(model, pic, side, width, height):
 def MakePanel(model, pic, side, width, height, output_path):
     list_ready_pics=['L01', 'L02','L03','L04','L05','L07','L10','L11','L12','C01','C02','C03','NC1', 'NC2','NC3']
-    
-    # Определяем путь для сохранения DXF файла
-    output_path = os.path.join("output", f"{pic}.dxf")
     
     if 'out' in pic or 'OUT' in pic:
         inout = 'out'
@@ -60,5 +56,4 @@ def MakePanel(model, pic, side, width, height, output_path):
 
         
 if __name__ == "__main__":
-    MakePanel('DELTA PRO PP', 'L02_out', 'L', 950, 2100)
     MakePanel('DELTA PRO PP', 'L02_out', 'L', 950, 2100, 'test_output.dxf')

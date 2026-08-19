@@ -261,15 +261,11 @@ def build_door_params(
     # здесь делается dxf для накладки  ==================================================================
     # В конце out_dxf_name и in_dxf_name получают имена с dxf файлами накладок. Нам нужно: если для рисунка готов новый метод
     # обработки - запустить его (MakePanel/main.py), иначе использовать старый метод (make_scale_dxf).
-    
-    out_dxf_name = make_scale_dxf(
-        out_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "out", check_side
-    )
-    in_dxf_name = make_scale_dxf(
-        in_pic, int(round(width)), int(round(height)), str(dxf_root), str(order_path), "in", check_side
-    )
-    
-    #  ==================================================================
+
+    out_dxf_name = prepare_dxf(model, out_pic, width, height, check_side, "out", str(dxf_root), str(order_path))
+    in_dxf_name = prepare_dxf(model, in_pic, width, height, check_side, "in", str(dxf_root), str(order_path))
+
+    # ==================================================================
 
     is_mdf_door = "PP" in model.upper() or "NEXT" in model.upper()
     metal_color = _metal_finish(string_params, metal_root)
@@ -396,31 +392,45 @@ def make_folder(tdot, current_dir):
     folder_path.mkdir(parents=True, exist_ok=False)
     return str(folder_path)
 
-def make_scale_dxf(name_dxf, width, height, dxf_path, order_path, inout, check_side):
+def prepare_dxf(model, pic_name, width, height, side, inout, dxf_root_path, order_path):
+    """
+    Подготавливает DXF файл, выбирая между новым алгоритмом и старым масштабированием.
+    """
+    from MakePanel.main import MakePanel
     from scale import scale_panel_by_opening
+
+    list_ready_pics = ['L01', 'L02', 'L03', 'L04', 'L05', 'L07', 'L10', 'L11', 'L12', 'C01', 'C02', 'C03', 'NC1', 'NC2', 'NC3']
     
-    # Формируем имя исходного и конечного файла
-    source_filename = f"{name_dxf}_{inout}.dxf"
-    output_filename = f"{name_dxf}_{inout}.dxf"
-    
-    source_path = os.path.join(dxf_path, source_filename)
+    use_new_alg = any(name in pic_name for name in list_ready_pics)
+
+    output_filename = f"{pic_name}_{inout}.dxf"
     final_output_path = os.path.join(order_path, output_filename)
 
-    opening_width=int(width)
-    opening_height=int(height)
-    
-    if not os.path.isfile(source_path):
-        raise ValueError(f"Не найден исходный DXF: {source_path}")
-    result = scale_panel_by_opening(
-        source_path,
-        order_path,
-        opening_width,
-        opening_height,
-        check_side,
-        output_filename=output_filename
-    )
-    if result is None or not os.path.isfile(final_output_path):
-        raise RuntimeError(f"Не удалось подготовить DXF: {source_path}")
+    if use_new_alg:
+        print(f"🚀 Запуск нового алгоритма для рисунка '{pic_name}'...")
+        # Новый алгоритм сам обрабатывает inout и сохраняет файл
+        MakePanel(model, f"{pic_name}_{inout}", side, width, height, final_output_path)
+        if not os.path.isfile(final_output_path):
+            raise RuntimeError(f"Новый алгоритм не создал DXF файл: {final_output_path}")
+    else:
+        print(f"↔️  Запуск старого алгоритма масштабирования для '{pic_name}'...")
+        source_filename = f"{pic_name}_{inout}.dxf"
+        source_path = os.path.join(dxf_root_path, source_filename)
+
+        if not os.path.isfile(source_path):
+            raise ValueError(f"Не найден исходный DXF для масштабирования: {source_path}")
+
+        result = scale_panel_by_opening(
+            source_path,
+            order_path,
+            width,
+            height,
+            side,
+            output_filename=output_filename
+        )
+        if result is None or not os.path.isfile(final_output_path):
+            raise RuntimeError(f"Не удалось масштабировать DXF: {source_path}")
+
     return final_output_path
 
 
