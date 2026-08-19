@@ -24,7 +24,6 @@ sys.path.insert(0, parent_dir)
 
 
 def MakePanel(model, pic, side, width, height):
-def MakePanel(model, pic, side, width, height, output_path):
     list_ready_pics=['L01', 'L02','L03','L04','L05','L07','L10','L11','L12','C01','C02','C03','NC1', 'NC2','NC3']
     
     # Определяем путь для сохранения DXF файла
@@ -61,4 +60,3 @@ def MakePanel(model, pic, side, width, height, output_path):
         
 if __name__ == "__main__":
     MakePanel('DELTA PRO PP', 'L02_out', 'L', 950, 2100)
-    MakePanel('DELTA PRO PP', 'L02_out', 'L', 950, 2100, 'test_output.dxf')

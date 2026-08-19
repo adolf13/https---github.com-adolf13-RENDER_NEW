@@ -1,0 +1,67 @@
+# Игнорировать Python служебные файлы
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Игнорировать виртуальные окружения
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Игнорировать IDE и редакторы
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Игнорировать временные файлы
+*.log
+*.tmp
+*.bak
+*.cache
+
+# Игнорировать папку с результатами рендеринга (если есть)
+ORDERS/
+*.png
+*.obj
+*.mtl
+
+textures/
+*.png
+*.jpg
+
+Pic/
+*.dxf
+
+furniture/
+*.obj
+*.mtl
+*.stl
+
+frame/
+*.obj
+*.mtl
+*.stl
+
+decor/
+*.jpg
+*.png
+
+textures/
+frame/
+Pic/
+*.blend
+*.obj
+*.mtl
+
+# DXF-профили фрез являются частью рабочего рендера и должны храниться в Git.
+!cutters/
+!cutters/*.dxf
+
