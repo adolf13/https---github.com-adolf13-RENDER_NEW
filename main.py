@@ -271,57 +271,10 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
-    # Строим абсолютные пути
-    base_dir = current_dir  # или os.path.join(current_dir, '3D_module')
-    
-    def to_obj_path(path):
-        if path and path.lower().endswith('.stl'):
-            return path[:-4] + '.obj'
-        # Если в пути есть .obj, но он заканчивается на .stl (ошибка в GUI), исправляем
-        if path and '.obj' in path and path.lower().endswith('.stl'):
-             return path[:-4]
-        if path and '.stl' in path and path.lower().endswith('.obj'):
-             return path
-        return path
-
-    params = DoorParams(
-        dxf_path=os.path.join(base_dir, "Pic/D26_out.dxf"),
-        texture_path=os.path.join(base_dir, "textures/ЛКП_Зеленый изумруд-Ч.jpg"),
-        output_path=os.path.join(base_dir, "result/door"),
-        width=950,
-        height=2050,
-        pff=85,
-        zff=85,
-        vff=85,
-        side="R",
-        hinge_stl=os.path.join(base_dir, "furniture/pelta.stl"),
-        hinge_finish=os.path.join(base_dir, "textures/Черная-шагрень-Ч.jpg"),
-        hinge_count=3,
-        
-        handle_path_out=to_obj_path(os.path.join(base_dir, "furniture/handle_LARGO_cr.obj")),
-        
-        peephole_path=to_obj_path(os.path.join(base_dir, "furniture/peep.obj")),
-        peephole_pos="center",
-        
-        nakl_main_lock_out=to_obj_path(os.path.join(base_dir, "furniture/BN_26_cr.obj")),
-        
-        nakl_adv_lock_out=to_obj_path(os.path.join(base_dir, "furniture/Nakl_Krit_cr.obj")),
-        
-        latch_path=to_obj_path(os.path.join(base_dir, "furniture/Pov_Apecs_bl.obj")),
-        
-        frame_metal=False,
-        frame_stl=os.path.join(base_dir, "frame/DELTA/Gasparini_E5_H2100_B950.stl"),
-        frame_finish=os.path.join(base_dir, "textures/Черная-шагрень-Ч.jpg"),
-        frame_inner_finish=os.path.join(base_dir, "textures/Черная-шагрень-Ч.jpg"),
-        wall_texture_path=os.path.join(base_dir, "decor/wall3.jpg"),
-        floor_texture_path=os.path.join(base_dir, "decor/floor.jpg"),
-        dxf_path_inner=os.path.join(base_dir, "Pic/D26_in.dxf"),
-        texture_path_inner=os.path.join(base_dir, "textures/ЛКП_Зеленый изумруд-Ч.jpg"),
-        wall_texture_path_inner=os.path.join(base_dir, "decor/wall.jpg"),
-        floor_texture_path_inner=os.path.join(base_dir, "decor/floor.jpg")
+    server_args = _parse_server_args()
+    create_app().run(
+        host=server_args.host,
+        port=server_args.port,
+        debug=False,
+        threaded=True,
     )
-
-    generate_door(params)

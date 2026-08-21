@@ -2,7 +2,7 @@
 import configparser
 import os
 from .method_ezdxf import create_document, get_modelspace, draw_line, draw_rec_line, save_document, move_all_x
-from size import size
+from .size import size
 
 
 def make(model, width, height, inout, output_path):

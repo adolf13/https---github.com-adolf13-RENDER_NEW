@@ -282,7 +282,7 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
     # Строим абсолютные пути
-    base_dir = current_dir  # или os.path.join(current_dir, '3D_module')
+    base_dir = os.path.dirname(current_dir)  # Используем родительскую директорию
     
     def to_obj_path(path):
         if path and path.lower().endswith('.stl'):
@@ -295,8 +295,8 @@ if __name__ == "__main__":
         return path
 
     params = DoorParams(
-        dxf_path=os.path.join(base_dir, "Pic/D26_out.dxf"),
-        texture_path=os.path.join(base_dir, "textures/ЛКП_Зеленый изумруд-Ч.jpg"),
+        dxf_path=os.path.join(base_dir, "Pic/C03_out.dxf"),
+        texture_path=os.path.join(base_dir, "/home/alex/RENDER_NEW/textures/pvc_color/ЛКП Бирюза/ЛКП Бирюза_BaseColor.png"),
         output_path=os.path.join(base_dir, "result/door"),
         width=950,
         height=2050,
@@ -305,12 +305,12 @@ if __name__ == "__main__":
         vff=85,
         side="R",
         hinge_stl=os.path.join(base_dir, "furniture/pelta.stl"),
-        hinge_finish=os.path.join(base_dir, "textures/Черная-шагрень-Ч.jpg"),
+        hinge_finish=os.path.join(base_dir, "/home/alex/RENDER_NEW/textures/metal_color/черный шелк/черный шелк_BaseColor.png"),
         hinge_count=3,
         
         handle_path=to_obj_path(os.path.join(base_dir, "furniture/handle_LARGO_cr.obj")),
         
-        peephole_path=to_obj_path(os.path.join(base_dir, "furniture/peep.obj")),
+        peephole_path=to_obj_path(os.path.join(base_dir, "furniture/Peep.obj")),
         peephole_pos="center",
         
         plate_path=to_obj_path(os.path.join(base_dir, "furniture/BN_26_cr.obj")),
@@ -321,12 +321,12 @@ if __name__ == "__main__":
         
         frame_metal=False,
         frame_stl=os.path.join(base_dir, "frame/DELTA/Gasparini_E5_H2100_B950.stl"),
-        frame_finish=os.path.join(base_dir, "textures/Черная-шагрень-Ч.jpg"),
-        frame_inner_finish=os.path.join(base_dir, "textures/Черная-шагрень-Ч.jpg"),
+        frame_finish=os.path.join(base_dir, "/home/alex/RENDER_NEW/textures/metal_color/черный шелк/черный шелк_BaseColor.png"),
+        frame_inner_finish=os.path.join(base_dir, "/home/alex/RENDER_NEW/textures/metal_color/черный шелк/черный шелк_BaseColor.png"),
         wall_texture_path=os.path.join(base_dir, "decor/wall3.jpg"),
         floor_texture_path=os.path.join(base_dir, "decor/floor.jpg"),
-        dxf_path_inner=os.path.join(base_dir, "Pic/D26_in.dxf"),
-        texture_path_inner=os.path.join(base_dir, "textures/ЛКП_Зеленый изумруд-Ч.jpg"),
+        dxf_path_inner=os.path.join(base_dir, "Pic/C03_in.dxf"),
+        texture_path_inner=os.path.join(base_dir, "/home/alex/RENDER_NEW/textures/metal_color/черный шелк/черный шелк_BaseColor.png"),
         wall_texture_path_inner=os.path.join(base_dir, "decor/wall.jpg"),
         floor_texture_path_inner=os.path.join(base_dir, "decor/floor.jpg")
     )

@@ -164,7 +164,7 @@ def _scene_texture(value: Any, default: str) -> str:
     if relative.parts and relative.parts[0].casefold() != "decor":
         relative = Path("decor") / relative
 
-    decor_root = (MODULE_DIR / "decor").resolve()
+    decor_root = (MODULE_DIR.parent / "decor").resolve()
     target = (MODULE_DIR / relative).resolve()
     try:
         target.relative_to(decor_root)
@@ -195,7 +195,7 @@ def _frame_path(model: str, width: float, height: float) -> str:
             / f"Gasparini_E5_H{height_int}_B{width_int}.stl"
         )
 
-    target = MODULE_DIR / relative
+    target = MODULE_DIR.parent / relative
     if not target.is_file():
         raise ValueError(
             f"Не найдена коробка для {model}, {width_int}×{height_int}: "
@@ -240,10 +240,10 @@ def build_door_params(
     furniture = _required_text(string_params, "08_Фурнитура")
     trim_color = _optional_finish(string_params.get("11_Обналичка (цвет)"))
 
-    furniture_root = MODULE_DIR / "furniture"
-    metal_root = MODULE_DIR / "textures" / "metal_color"
-    pvc_root = MODULE_DIR / "textures" / "pvc_color"
-    dxf_root = MODULE_DIR / "Pic"
+    furniture_root = MODULE_DIR.parent / "furniture"
+    metal_root = MODULE_DIR.parent / "textures" / "metal_color"
+    pvc_root = MODULE_DIR.parent / "textures" / "pvc_color"
+    dxf_root = MODULE_DIR.parent / "Pic"
     
     check_side='L' if is_left else 'R'
     
